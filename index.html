@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Quest - Enhanced</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: linear-gradient(135deg, #667eea 0%, #43549f 100%);
+      --primary-solid: #ddea66;
+      --secondary: #1a1a2e;
+      --accent: #16213e;
+      --success: #00d4aa;
+      --error: #ff6b6b;
+      --warning: #ffa726;
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d1;
+      --glass-bg: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --shadow-light: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--secondary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: backgroundShift 20s ease-in-out infinite;
+    }
+
+    @keyframes backgroundShift {
+
+      0%,
+      100% {
+        transform: translateX(0) translateY(0) rotate(0deg);
+      }
+
+      33% {
+        transform: translateX(-10px) translateY(-10px) rotate(1deg);
+      }
+
+      66% {
+        transform: translateX(10px) translateY(10px) rotate(-1deg);
+      }
+    }
+
+    .quiz-container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 700px;
+      overflow: hidden;
+      position: relative;
+      display: none;
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .quiz-container.transitioning {
+      opacity: 0.7;
+      transform: scale(0.98);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .quiz-header {
+      background: var(--primary);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quiz-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .quiz-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(45deg, #ffffff, #f0f8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .quiz-subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quiz-body {
+      padding: 2.5rem;
+      position: relative;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      gap: 1rem;
+    }
+
+    .score-display {
+      background: rgba(0, 212, 170, 0.1);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-display::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .score-display.animate::before {
+      left: 100%;
+    }
+
+    .score-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--success);
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .score-value.bounce {
+      animation: scoreBounce 0.6s ease;
+    }
+
+    @keyframes scoreBounce {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.3) rotate(5deg);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .progress-container {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      height: 12px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #4ecdc4);
+      border-radius: 12px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .question-counter {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.8rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .question-box {
+      margin-bottom: 2rem;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .question-box.fade-out {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .question-box.fade-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #question {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+      text-align: center;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .options {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .option-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .option-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .option-card:hover::before {
+      transform: translateX(100%);
+    }
+
+    .option-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--primary-solid);
+      box-shadow: 0 12px 24px rgba(102, 126, 234, 0.25);
+    }
+
+    .option-card.selected {
+      border-color: var(--primary-solid);
+      background: rgba(102, 126, 234, 0.15);
+    }
+
+    .option-card.correct {
+      border-color: var(--success);
+      background: rgba(0, 212, 170, 0.15);
+      animation: correctPulse 0.6s ease;
+    }
+
+    .option-card.incorrect {
+      border-color: var(--error);
+      background: rgba(255, 107, 107, 0.15);
+      animation: incorrectShake 0.5s ease;
+    }
+
+    @keyframes correctPulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes incorrectShake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-8px);
+      }
+
+      75% {
+        transform: translateX(8px);
+      }
+    }
+
+    .option-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+
+    .option-input {
+      display: none;
+    }
+
+    #feedback {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 16px;
+      font-weight: 500;
+      font-size: 1.1rem;
+      text-align: center;
+      display: none;
+      animation: feedbackSlide 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes feedbackSlide {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .feedback-correct {
+      background: rgba(0, 212, 170, 0.15);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+      color: var(--success);
+    }
+
+    .feedback-incorrect {
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: var(--error);
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2.5rem 2.5rem;
+      gap: 1rem;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: var(--text-primary);
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      min-width: 120px;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .result-container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 600px;
+      padding: 3rem;
+      text-align: center;
+      display: none;
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .result-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: var(--primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .final-score {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--success);
+      margin: 2rem 0;
+      animation: finalScoreEntry 1s ease;
+    }
+
+    @keyframes finalScoreEntry {
+      0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(-10deg);
+      }
+
+      70% {
+        transform: scale(1.1) rotate(5deg);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    .result-message {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .performance-badge {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 1rem 0;
+    }
+
+    .badge-excellent {
+      background: rgba(0, 212, 170, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+    }
+
+    .badge-good {
+      background: rgba(255, 167, 38, 0.2);
+      color: var(--warning);
+      border: 1px solid rgba(255, 167, 38, 0.3);
+    }
+
+    .badge-needs-improvement {
+      background: rgba(255, 107, 107, 0.2);
+      color: var(--error);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    /* Tomato Animation Styles */
+    .tomato-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .tomato {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #ff6b47;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .tomato::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 8px;
+      background: #4a7c59;
+      border-radius: 50%;
+    }
+
+    .tomato::after {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 10px;
+      background: #4a7c59;
+      border-radius: 1px;
+    }
+
+    .splat {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #ff6b47 30%, #ff8a65 60%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      animation: splatAnimation 1s ease-out forwards;
+    }
+
+    @keyframes throwTomatoLeft {
+      0% {
+        transform: translateX(-100px) translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateX(50vw) translateY(20vh) rotate(720deg);
+        opacity: 0.8;
+      }
+    }
+
+    @keyframes throwTomatoRight {
+      0% {
+        transform: translateX(100px) translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateX(-50vw) translateY(20vh) rotate(-720deg);
+        opacity: 0.8;
+      }
+    }
+
+    @keyframes splatAnimation {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.5);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .quiz-header h1 {
+        font-size: 2rem;
+      }
+
+      .quiz-body,
+      .quiz-footer {
+        padding: 1.5rem;
+      }
+
+      .options {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-bar {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .quiz-footer {
+        flex-direction: column-reverse;
+      }
+
+      .tomato {
+        width: 30px;
+        height: 30px;
+      }
+
+      .splat {
+        width: 40px;
+        height: 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="quiz-container" class="quiz-container">
+    <div class="quiz-header">
+      <h1>Vocabulary Quest</h1>
+      <p class="quiz-subtitle">Challenge your knowledge of synonyms and antonyms</p>
+    </div>
+
+    <div class="quiz-body">
+      <div class="stats-bar">
+        <div class="score-display">
+          <span class="score-label">Score:</span>
+          <span class="score-value" id="score-value">0</span>
+          <span class="score-label">/ <span id="total-questions">0</span></span>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="question-counter">
+          <span id="question-counter">1 / 200</span>
+        </div>
+      </div>
+
+      <div class="question-box" id="question-box">
+        <div id="question"></div>
+        <div class="options" id="options"></div>
+        <div id="feedback"></div>
+      </div>
+    </div>
+
+    <div class="quiz-footer">
+      <button id="prevBtn" class="btn btn-secondary" onclick="prevQuestion()">← Previous</button>
+      <button id="submitBtn" class="btn" onclick="submitAnswer()">Submit Answer</button>
+      <button id="nextBtn" class="btn" onclick="nextQuestion()" style="display: none;">Next →</button>
+    </div>
+  </div>
+
+  <div id="result-container" class="result-container"></div>
+  <div id="tomato-container" class="tomato-container"></div>
+
+  <!-- Audio Elements -->
+  <audio id="booSound1" preload="auto">
+    <source
+      src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L1u2snCjuBzvLZiTYIG"
+      type="audio/wav">
+  </audio>
+  <audio id="booSound2" preload="auto">
+    <source
+      src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L1u2snCjuBzvLZiTYIG"
+      type="audio/wav">
+  </audio>
+  <audio id="splatSound" preload="auto">
+    <source
+      src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+L1u2snCjuBzvLZiTYIG"
+      type="audio/wav">
+  </audio>
+
+  <script>
+    const antonymData = [
+      { word: "abate", options: ["vague", "definite", "modest", "intensify"], answer: "intensify", type: "antonym" },
+      { word: "aberration", options: ["normality", "selfish", "thorough", "abundance"], answer: "normality", type: "antonym" },
+      { word: "abhor", options: ["exciting", "admire", "indulge", "unproductive"], answer: "admire", type: "antonym" },
+      { word: "abstain", options: ["honesty", "cowardly", "indulge", "extraordinary"], answer: "indulge", type: "antonym" },
+      { word: "acquiesce", options: ["neglect", "convict", "oppose", "depressed"], answer: "oppose", type: "antonym" },
+      { word: "adamant", options: ["virtuous", "flexible", "aggravate", "malevolent"], answer: "flexible", type: "antonym" },
+      { word: "altruistic", options: ["industrious", "apathetic", "selfish", "petty"], answer: "selfish", type: "antonym" },
+      { word: "ambiguous", options: ["clear", "modern", "wordy", "unlikely"], answer: "clear", type: "antonym" },
+      { word: "ameliorate", options: ["worsen", "petty", "enthusiastic", "modest"], answer: "worsen", type: "antonym" },
+      { word: "apathetic", options: ["enthusiastic", "miserable", "provoke", "cowardly"], answer: "enthusiastic", type: "antonym" },
+      { word: "arrogant", options: ["humble", "apathetic", "agitation", "truthful"], answer: "humble", type: "antonym" },
+      { word: "audacious", options: ["originality", "timid", "respect", "energize"], answer: "timid", type: "antonym" },
+      { word: "austere", options: ["luxurious", "modest", "narrow", "hidden"], answer: "luxurious", type: "antonym" },
+      { word: "benevolent", options: ["originality", "common", "virtuous", "malevolent"], answer: "malevolent", type: "antonym" },
+      { word: "brevity", options: ["lengthiness", "extraordinary", "harmful", "respect"], answer: "lengthiness", type: "antonym" },
+      { word: "cacophony", options: ["excellent", "generosity", "harmony", "malevolent"], answer: "harmony", type: "antonym" },
+      { word: "capricious", options: ["consistent", "respect", "changeable", "original"], answer: "consistent", type: "antonym" },
+      { word: "circumspect", options: ["preserve", "hidden", "disrespect", "reckless"], answer: "reckless", type: "antonym" },
+      { word: "coerce", options: ["persuade", "normality", "wordy", "indulge"], answer: "persuade", type: "antonym" },
+      { word: "concise", options: ["honesty", "sloppy", "wordy", "preserve"], answer: "wordy", type: "antonym" },
+      { word: "concur", options: ["disagree", "honesty", "excellent", "seriousness"], answer: "disagree", type: "antonym" },
+      { word: "conspicuous", options: ["lazy", "moral", "hidden", "timid"], answer: "hidden", type: "antonym" },
+      { word: "contrite", options: ["seriousness", "serious", "unrepentant", "abundance"], answer: "unrepentant", type: "antonym" },
+      { word: "copious", options: ["industrious", "luxurious", "scarce", "taciturn"], answer: "scarce", type: "antonym" },
+      { word: "cryptic", options: ["consistent", "cowardly", "obvious", "beneficial"], answer: "obvious", type: "antonym" },
+      { word: "cursory", options: ["oppose", "wordy", "generosity", "thorough"], answer: "thorough", type: "antonym" },
+      { word: "dauntless", options: ["cowardly", "timid", "overlook", "unlikely"], answer: "cowardly", type: "antonym" },
+      { word: "dearth", options: ["malevolent", "common", "exciting", "abundance"], answer: "abundance", type: "antonym" },
+      { word: "debacle", options: ["competent", "success", "unrepentant", "apathetic"], answer: "success", type: "antonym" },
+      { word: "decadent", options: ["moral", "clear", "serious", "generosity"], answer: "moral", type: "antonym" },
+      { word: "deference", options: ["careless", "lazy", "disrespect", "timid"], answer: "disrespect", type: "antonym" },
+      { word: "deleterious", options: ["disagree", "apathetic", "beneficial", "obvious"], answer: "beneficial", type: "antonym" },
+      { word: "diligent", options: ["indulge", "lazy", "famous", "harmless"], answer: "lazy", type: "antonym" },
+      { word: "discern", options: ["energize", "changeable", "convict", "overlook"], answer: "overlook", type: "antonym" },
+      { word: "disdain", options: ["vague", "scarce", "serious", "respect"], answer: "respect", type: "antonym" },
+      { word: "disparage", options: ["reckless", "cheerful", "original", "praise"], answer: "praise", type: "antonym" },
+      { word: "docile", options: ["timid", "stubborn", "lazy", "cheerful"], answer: "stubborn", type: "antonym" },
+      { word: "dormant", options: ["original", "active", "moral", "respect"], answer: "active", type: "antonym" },
+      { word: "ebullient", options: ["introverted", "depressed", "definite", "agitation"], answer: "depressed", type: "antonym" },
+      { word: "eclectic", options: ["disrespect", "narrow", "consistent", "changeable"], answer: "consistent", type: "antonym" },
+      { word: "efface", options: ["unrepentant", "beneficial", "preserve", "modern"], answer: "preserve", type: "antonym" },
+      { word: "elated", options: ["calm", "excellent", "original", "miserable"], answer: "miserable", type: "antonym" },
+      { word: "eloquent", options: ["inarticulate", "indulge", "normality", "lazy"], answer: "inarticulate", type: "antonym" },
+      { word: "emulate", options: ["neglect", "calm", "obvious", "aggravate"], answer: "neglect", type: "antonym" },
+      { word: "enervate", options: ["consistent", "careless", "agitation", "energize"], answer: "energize", type: "antonym" },
+      { word: "ephemeral", options: ["hinder", "clear", "depressed", "permanent"], answer: "permanent", type: "antonym" },
+      { word: "equanimity", options: ["lengthiness", "virtuous", "industrious", "agitation"], answer: "agitation", type: "antonym" },
+      { word: "equivocal", options: ["definite", "excellent", "humble", "yielding"], answer: "definite", type: "antonym" },
+      { word: "esoteric", options: ["sloppy", "worsen", "common", "reckless"], answer: "common", type: "antonym" },
+      { word: "evanescent", options: ["indulge", "enduring", "industrious", "changeable"], answer: "enduring", type: "antonym" },
+      { word: "exacerbate", options: ["benevolent", "alleviate", "originality", "unproductive"], answer: "alleviate", type: "antonym" },
+      { word: "exonerate", options: ["convict", "secure", "alleviate", "miserable"], answer: "convict", type: "antonym" },
+      { word: "facilitate", options: ["luxurious", "lazy", "hinder", "aggravate"], answer: "hinder", type: "antonym" },
+      { word: "fallacious", options: ["excellent", "truthful", "modest", "changeable"], answer: "truthful", type: "antonym" },
+      { word: "fastidious", options: ["careless", "verbose", "humble", "enduring"], answer: "careless", type: "antonym" },
+      { word: "fervent", options: ["apathetic", "indulge", "worsen", "overlook"], answer: "apathetic", type: "antonym" },
+      { word: "flagrant", options: ["respectful", "subtle", "alleviate", "humble"], answer: "subtle", type: "antonym" },
+      { word: "fortuitous", options: ["intentional", "secure", "cheerful", "yielding"], answer: "intentional", type: "antonym" },
+      { word: "frivolous", options: ["modest", "luxurious", "introverted", "serious"], answer: "serious", type: "antonym" },
+      { word: "furtive", options: ["open", "preserve", "miserable", "normality"], answer: "open", type: "antonym" },
+      { word: "garrulous", options: ["neglect", "taciturn", "modest", "disrespect"], answer: "taciturn", type: "antonym" },
+      { word: "gregarious", options: ["introverted", "overlook", "humble", "unlikely"], answer: "introverted", type: "antonym" },
+      { word: "guile", options: ["persuade", "moral", "honesty", "modest"], answer: "honesty", type: "antonym" },
+      { word: "hackneyed", options: ["verbose", "original", "abundance", "inarticulate"], answer: "original", type: "antonym" },
+      { word: "haughty", options: ["cautious", "yielding", "unrepentant", "modest"], answer: "modest", type: "antonym" },
+      { word: "immutable", options: ["changeable", "enduring", "originality", "scarce"], answer: "changeable", type: "antonym" },
+      { word: "impetuous", options: ["harmony", "luxurious", "easy", "cautious"], answer: "cautious", type: "antonym" },
+      { word: "implacable", options: ["neutral", "yielding", "lengthiness", "malevolent"], answer: "yielding", type: "antonym" },
+      { word: "impudent", options: ["timid", "famous", "verbose", "respectful"], answer: "respectful", type: "antonym" },
+      { word: "inadvertent", options: ["virtuous", "moral", "benevolent", "intentional"], answer: "intentional", type: "antonym" },
+      { word: "incisive", options: ["vague", "fallible", "hinder", "obvious"], answer: "vague", type: "antonym" },
+      { word: "indolent", options: ["agitation", "neutral", "easy", "industrious"], answer: "industrious", type: "antonym" },
+      { word: "inept", options: ["luxurious", "neglect", "extraordinary", "competent"], answer: "competent", type: "antonym" },
+      { word: "infallible", options: ["worsen", "industrious", "fallible", "inarticulate"], answer: "fallible", type: "antonym" },
+      { word: "innocuous", options: ["harmful", "miserable", "fallible", "provoke"], answer: "harmful", type: "antonym" },
+      { word: "insipid", options: ["calm", "exciting", "enduring", "intensify"], answer: "exciting", type: "antonym" },
+      { word: "intrepid", options: ["abundance", "aggravate", "enduring", "fearful"], answer: "fearful", type: "antonym" },
+      { word: "irate", options: ["calm", "clear", "petty", "harmful"], answer: "calm", type: "antonym" },
+      { word: "laconic", options: ["verbose", "secure", "overlook", "careless"], answer: "verbose", type: "antonym" },
+      { word: "languid", options: ["honesty", "industrious", "energetic", "serious"], answer: "energetic", type: "antonym" },
+      { word: "levity", options: ["seriousness", "introverted", "indulge", "miserable"], answer: "seriousness", type: "antonym" },
+      { word: "lucid", options: ["narrow", "confusing", "subtle", "permanent"], answer: "confusing", type: "antonym" },
+      { word: "magnanimous", options: ["stubborn", "petty", "seriousness", "careless"], answer: "petty", type: "antonym" },
+      { word: "malevolent", options: ["depressed", "benevolent", "intentional", "introverted"], answer: "benevolent", type: "antonym" },
+      { word: "mediocre", options: ["modest", "scarce", "virtuous", "excellent"], answer: "excellent", type: "antonym" },
+      { word: "meticulous", options: ["depressed", "definite", "sloppy", "modest"], answer: "sloppy", type: "antonym" },
+      { word: "mitigate", options: ["aggravate", "intentional", "confusing", "scarce"], answer: "aggravate", type: "antonym" },
+      { word: "morose", options: ["verbose", "cheerful", "preserve", "generosity"], answer: "cheerful", type: "antonym" },
+      { word: "mundane", options: ["extraordinary", "selfish", "stubborn", "clear"], answer: "extraordinary", type: "antonym" },
+      { word: "nefarious", options: ["clear", "energetic", "virtuous", "generosity"], answer: "virtuous", type: "antonym" },
+      { word: "obdurate", options: ["yielding", "indulge", "exciting", "generosity"], answer: "yielding", type: "antonym" },
+      { word: "obscure", options: ["famous", "generosity", "scarce", "neglect"], answer: "famous", type: "antonym" },
+      { word: "obsolete", options: ["stubborn", "modern", "unproductive", "oppose"], answer: "modern", type: "antonym" },
+      { word: "onerous", options: ["persuade", "easy", "indulge", "thorough"], answer: "easy", type: "antonym" },
+      { word: "ostentatious", options: ["originality", "alleviate", "modest", "abundance"], answer: "modest", type: "antonym" },
+      { word: "parsimony", options: ["competent", "extraordinary", "generosity", "verbose"], answer: "generosity", type: "antonym" },
+      { word: "partisan", options: ["agitation", "stubborn", "persuade", "neutral"], answer: "neutral", type: "antonym" },
+      { word: "penchant", options: ["dislike", "secure", "originality", "modern"], answer: "dislike", type: "antonym" },
+      { word: "perfunctory", options: ["thorough", "malevolent", "intensify", "open"], answer: "thorough", type: "antonym" },
+      { word: "pernicious", options: ["reckless", "harmless", "stubborn", "easy"], answer: "harmless", type: "antonym" },
+      { word: "placate", options: ["originality", "disagree", "provoke", "changeable"], answer: "provoke", type: "antonym" },
+      { word: "platitude", options: ["overlook", "harmful", "respect", "originality"], answer: "originality", type: "antonym" },
+      { word: "plausible", options: ["subtle", "abundance", "unlikely", "virtuous"], answer: "unlikely", type: "antonym" },
+      { word: "precarious", options: ["aggravate", "secure", "oppose", "apathetic"], answer: "secure", type: "antonym" },
+      { word: "prolific", options: ["unproductive", "modern", "extraordinary", "famous"], answer: "unproductive", type: "antonym" }
+    ];
+
+    const synonymData = [
+      { word: "Abstruse", options: ["Simple", "Common", "Clear", "Obscure"], answer: "Obscure", type: "synonym" },
+      { word: "Recalcitrant", options: ["Obedient", "Compliant", "Docile", "Stubborn"], answer: "Stubborn", type: "synonym" },
+      { word: "Pernicious", options: ["Harmless", "Kind", "Beneficial", "Deadly"], answer: "Deadly", type: "synonym" },
+      { word: "Obfuscate", options: ["Clarify", "Explain", "Simplify", "Confuse"], answer: "Confuse", type: "synonym" },
+      { word: "Excoriate", options: ["Praise", "Honor", "Reward", "Criticize"], answer: "Criticize", type: "synonym" },
+      { word: "Sycophant", options: ["Leader", "Critic", "Follower", "Flatterer"], answer: "Flatterer", type: "synonym" },
+      { word: "Pulchritude", options: ["Ugliness", "Anger", "Cruelty", "Beauty"], answer: "Beauty", type: "synonym" },
+      { word: "Obdurate", options: ["Flexible", "Yielding", "Soft", "Stubborn"], answer: "Stubborn", type: "synonym" },
+      { word: "Recondite", options: ["Familiar", "Clear", "Popular", "Arcane"], answer: "Arcane", type: "synonym" },
+      { word: "Insouciant", options: ["Worried", "Concerned", "Anxious", "Carefree"], answer: "Carefree", type: "synonym" },
+      { word: "Vituperate", options: ["Compliment", "Support", "Ignore", "Insult"], answer: "Insult", type: "synonym" },
+      { word: "Lugubrious", options: ["Joyful", "Happy", "Cheerful", "Mournful"], answer: "Mournful", type: "synonym" },
+      { word: "Inveterate", options: ["Occasional", "Temporary", "Unusual", "Habitual"], answer: "Habitual", type: "synonym" },
+      { word: "Indefatigable", options: ["Tired", "Weary", "Lazy", "Energetic"], answer: "Energetic", type: "synonym" },
+      { word: "Contumacious", options: ["Obedient", "Submissive", "Compliant", "Defiant"], answer: "Defiant", type: "synonym" },
+      { word: "Quixotic", options: ["Practical", "Realistic", "Logical", "Idealistic"], answer: "Idealistic", type: "synonym" },
+      { word: "Nugatory", options: ["Important", "Valuable", "Meaningful", "Trivial"], answer: "Trivial", type: "synonym" },
+      { word: "Pusillanimous", options: ["Brave", "Bold", "Courageous", "Fearful"], answer: "Fearful", type: "synonym" },
+      { word: "Apocryphal", options: ["Genuine", "Authentic", "Valid", "Fake"], answer: "Fake", type: "synonym" },
+      { word: "Sanguine", options: ["Pessimistic", "Sad", "Depressed", "Optimistic"], answer: "Optimistic", type: "synonym" },
+      { word: "Intransigent", options: ["Yielding", "Submissive", "Obedient", "Uncompromising"], answer: "Uncompromising", type: "synonym" },
+      { word: "Munificent", options: ["Greedy", "Stingy", "Frugal", "Generous"], answer: "Generous", type: "synonym" },
+      { word: "Ubiquitous", options: ["Rare", "Scarce", "Singular", "Omnipresent"], answer: "Omnipresent", type: "synonym" },
+      { word: "Vicissitude", options: ["Stability", "Routine", "Consistency", "Change"], answer: "Change", type: "synonym" },
+      { word: "Desuetude", options: ["Use", "Tradition", "Custom", "Disuse"], answer: "Disuse", type: "synonym" },
+      { word: "Truculent", options: ["Friendly", "Peaceful", "Passive", "Aggressive"], answer: "Aggressive", type: "synonym" },
+      { word: "Pellucid", options: ["Vague", "Dim", "Faint", "Clear"], answer: "Clear", type: "synonym" },
+      { word: "Obeisance", options: ["Disrespect", "Rudeness", "Indifference", "Respect"], answer: "Respect", type: "synonym" },
+      { word: "Exiguous", options: ["Abundant", "Excessive", "Generous", "Scanty"], answer: "Scanty", type: "synonym" },
+      { word: "Mendacious", options: ["Honest", "Truthful", "Sincere", "Deceitful"], answer: "Deceitful", type: "synonym" },
+      { word: "Alacrity", options: ["Laziness", "Slowness", "Reluctance", "Eagerness"], answer: "Eagerness", type: "synonym" },
+      { word: "Impetuous", options: ["Cautious", "Calm", "Slow", "Rash"], answer: "Rash", type: "synonym" },
+      { word: "Probity", options: ["Dishonesty", "Trickery", "Fraud", "Integrity"], answer: "Integrity", type: "synonym" },
+      { word: "Inchoate", options: ["Mature", "Complete", "Final", "Unformed"], answer: "Unformed", type: "synonym" },
+      { word: "Pernickety", options: ["Careless", "Casual", "Lazy", "Fussy"], answer: "Fussy", type: "synonym" },
+      { word: "Sagacious", options: ["Silly", "Foolish", "Unwise", "Wise"], answer: "Wise", type: "synonym" },
+      { word: "Garrulous", options: ["Quiet", "Mute", "Silent", "Talkative"], answer: "Talkative", type: "synonym" },
+      { word: "Cacophony", options: ["Melody", "Harmony", "Silence", "Discord"], answer: "Discord", type: "synonym" },
+      { word: "Cupidity", options: ["Generosity", "Kindness", "Charity", "Greed"], answer: "Greed", type: "synonym" },
+      { word: "Disconsolate", options: ["Happy", "Joyful", "Cheerful", "Unhappy"], answer: "Unhappy", type: "synonym" },
+      { word: "Tenebrous", options: ["Bright", "Clear", "Luminous", "Dark"], answer: "Dark", type: "synonym" },
+      { word: "Lachrymose", options: ["Joyful", "Happy", "Dry", "Tearful"], answer: "Tearful", type: "synonym" },
+      { word: "Rebarbative", options: ["Charming", "Attractive", "Pleasant", "Offensive"], answer: "Offensive", type: "synonym" },
+      { word: "Dilatory", options: ["Prompt", "Speedy", "Quick", "Slow"], answer: "Slow", type: "synonym" },
+      { word: "Turpitude", options: ["Virtue", "Honor", "Decency", "Depravity"], answer: "Depravity", type: "synonym" },
+      { word: "Ebullient", options: ["Gloomy", "Depressed", "Sad", "Exuberant"], answer: "Exuberant", type: "synonym" },
+      { word: "Parsimonious", options: ["Generous", "Lavish", "Extravagant", "Frugal"], answer: "Frugal", type: "synonym" },
+      { word: "Sagacity", options: ["Foolishness", "Ignorance", "Stupidity", "Wisdom"], answer: "Wisdom", type: "synonym" },
+      { word: "Esoteric", options: ["Obvious", "Common", "Clear", "Arcane"], answer: "Arcane", type: "synonym" },
+      { word: "Lissome", options: ["Clumsy", "Awkward", "Stiff", "Graceful"], answer: "Graceful", type: "synonym" },
+      { word: "Ineffable", options: ["Expressible", "Loud", "Talkative", "Indescribable"], answer: "Indescribable", type: "synonym" },
+      { word: "Redolent", options: ["Fragrant", "Odorless", "Dull", "Quiet"], answer: "Fragrant", type: "synonym" },
+      { word: "Enervate", options: ["Strengthen", "Energize", "Weaken", "Inspire"], answer: "Weaken", type: "synonym" },
+      { word: "Perfunctory", options: ["Thorough", "Detailed", "Mechanical", "Intentional"], answer: "Mechanical", type: "synonym" },
+      { word: "Abrogate", options: ["Approve", "Repeal", "Support", "Enforce"], answer: "Repeal", type: "synonym" },
+      { word: "Expiate", options: ["Offend", "Ignore", "Atone", "Refuse"], answer: "Atone", type: "synonym" },
+      { word: "Celerity", options: ["Delay", "Swiftness", "Stillness", "Weakness"], answer: "Swiftness", type: "synonym" },
+      { word: "Timorous", options: ["Fearful", "Brave", "Assertive", "Loud"], answer: "Fearful", type: "synonym" },
+      { word: "Refulgent", options: ["Dark", "Faded", "Shining", "Dull"], answer: "Shining", type: "synonym" },
+      { word: "Obsequious", options: ["Defiant", "Dominant", "Servile", "Bold"], answer: "Servile", type: "synonym" },
+      { word: "Penurious", options: ["Wealthy", "Poor", "Lavish", "Happy"], answer: "Poor", type: "synonym" },
+      { word: "Callow", options: ["Inexperienced", "Mature", "Old", "Skilled"], answer: "Inexperienced", type: "synonym" },
+      { word: "Turgid", options: ["Simple", "Pompous", "Plain", "Small"], answer: "Pompous", type: "synonym" },
+      { word: "Mawkish", options: ["Bitter", "Sour", "Sentimental", "Rude"], answer: "Sentimental", type: "synonym" },
+      { word: "Hegemony", options: ["Weakness", "Domination", "Freedom", "Tolerance"], answer: "Domination", type: "synonym" },
+      { word: "Solipsistic", options: ["Generous", "Empathic", "Self-centered", "Social"], answer: "Self-centered", type: "synonym" },
+      { word: "Acerbic", options: ["Sweet", "Harsh", "Polite", "Silent"], answer: "Harsh", type: "synonym" },
+      { word: "Antediluvian", options: ["Modern", "Ancient", "Future", "Youthful"], answer: "Ancient", type: "synonym" },
+      { word: "Supercilious", options: ["Arrogant", "Humble", "Honest", "Shy"], answer: "Arrogant", type: "synonym" },
+      { word: "Phlegmatic", options: ["Calm", "Energetic", "Nervous", "Angry"], answer: "Calm", type: "synonym" },
+      { word: "Fastidious", options: ["Sloppy", "Meticulous", "Lazy", "Rash"], answer: "Meticulous", type: "synonym" },
+      { word: "Prolix", options: ["Brief", "Wordy", "Concise", "Silent"], answer: "Wordy", type: "synonym" },
+      { word: "Vicissitude", options: ["Fluctuation", "Calm", "Consistency", "Stability"], answer: "Fluctuation", type: "synonym" },
+      { word: "Invidious", options: ["Fair", "Offensive", "Honest", "Pleasant"], answer: "Offensive", type: "synonym" },
+      { word: "Pell-mell", options: ["Orderly", "Chaotic", "Calm", "Careful"], answer: "Chaotic", type: "synonym" },
+      { word: "Lambaste", options: ["Criticize", "Praise", "Encourage", "Embrace"], answer: "Criticize", type: "synonym" },
+      { word: "Umbrage", options: ["Joy", "Offense", "Laughter", "Silence"], answer: "Offense", type: "synonym" },
+      { word: "Inure", options: ["Surprise", "Accustom", "Reject", "Resist"], answer: "Accustom", type: "synonym" },
+      { word: "Apogee", options: ["Bottom", "Peak", "Decline", "Base"], answer: "Peak", type: "synonym" },
+      { word: "Obviate", options: ["Complicate", "Prevent", "Induce", "Permit"], answer: "Prevent", type: "synonym" },
+      { word: "Gainsay", options: ["Confirm", "Deny", "Repeat", "Support"], answer: "Deny", type: "synonym" },
+      { word: "Feckless", options: ["Responsible", "Ineffective", "Helpful", "Dynamic"], answer: "Ineffective", type: "synonym" },
+      { word: "Largesse", options: ["Avarice", "Generosity", "Greed", "Theft"], answer: "Generosity", type: "synonym" },
+      { word: "Ribald", options: ["Clean", "Vulgar", "Honest", "Gentle"], answer: "Vulgar", type: "synonym" },
+      { word: "Trenchant", options: ["Sharp", "Dull", "Weak", "Blunt"], answer: "Sharp", type: "synonym" },
+      { word: "Equanimity", options: ["Rage", "Composure", "Excitement", "Sadness"], answer: "Composure", type: "synonym" },
+      { word: "Perspicacious", options: ["Dull", "Insightful", "Slow", "Confused"], answer: "Insightful", type: "synonym" },
+      { word: "Ascetic", options: ["Self-disciplined", "Hedonistic", "Lazy", "Carefree"], answer: "Self-disciplined", type: "synonym" },
+      { word: "Adumbrate", options: ["Foreshadow", "Explain", "Deny", "Outline"], answer: "Foreshadow", type: "synonym" },
+      { word: "Noisome", options: ["Pleasant", "Offensive", "Mild", "Harmless"], answer: "Offensive", type: "synonym" },
+      { word: "Verisimilitude", options: ["Lie", "Fiction", "Authenticity", "Deception"], answer: "Authenticity", type: "synonym" },
+      { word: "Invective", options: ["Praise", "Abuse", "Logic", "Reason"], answer: "Abuse", type: "synonym" },
+      { word: "Dissemble", options: ["Reveal", "Conceal", "Admit", "Confess"], answer: "Conceal", type: "synonym" },
+      { word: "Propinquity", options: ["Distance", "Division", "Nearness", "Disparity"], answer: "Nearness", type: "synonym" },
+      { word: "Abstemious", options: ["Lavish", "Moderate", "Greedy", "Excessive"], answer: "Moderate", type: "synonym" },
+      { word: "Recondite", options: ["Simple", "Obscure", "Clear", "Obvious"], answer: "Obscure", type: "synonym" },
+      { word: "Noxious", options: ["Harmful", "Healing", "Weak", "Helpful"], answer: "Harmful", type: "synonym" },
+      { word: "Desultory", options: ["Focused", "Careful", "Aimless", "Steady"], answer: "Aimless", type: "synonym" },
+      { word: "Soporific", options: ["Sleep-inducing", "Exciting", "Energizing", "Noisy"], answer: "Sleep-inducing", type: "synonym" },
+      { word: "Inept", options: ["Clumsy", "Skilled", "Clever", "Efficient"], answer: "Clumsy", type: "synonym" }
+    ];
+
+    let quizData = [...antonymData, ...synonymData];
+
+    let currentQuestion = 0;
+    let score = 0;
+    const userAnswers = Array(quizData.length).fill(null);
+
+    const elements = {
+      quizContainer: document.getElementById("quiz-container"),
+      resultContainer: document.getElementById("result-container"),
+      questionEl: document.getElementById("question"),
+      optionsEl: document.getElementById("options"),
+      feedbackEl: document.getElementById("feedback"),
+      submitBtn: document.getElementById("submitBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      prevBtn: document.getElementById("prevBtn"),
+      progressBar: document.getElementById("progress-bar"),
+      scoreValue: document.getElementById("score-value"),
+      totalQuestions: document.getElementById("total-questions"),
+      questionCounter: document.getElementById("question-counter"),
+      questionBox: document.getElementById("question-box"),
+      tomatoContainer: document.getElementById("tomato-container")
+    };
+
+    // Enhanced Audio System
+    function createAudioContext() {
+      try {
+        // Create simple boo sounds using Web Audio API
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+
+        function createTone(frequency, duration, type = 'sine') {
+          const oscillator = context.createOscillator();
+          const gainNode = context.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(context.destination);
+
+          oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+          oscillator.type = type;
+
+          gainNode.gain.setValueAtTime(0.3, context.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + duration);
+
+          oscillator.start(context.currentTime);
+          oscillator.stop(context.currentTime + duration);
+        }
+
+        return {
+          playBoo: () => {
+            // Create a "boo" sound effect
+            createTone(150, 0.5, 'sawtooth');
+            setTimeout(() => createTone(120, 0.3, 'square'), 100);
+          },
+          playSplat: () => {
+            // Create a "splat" sound effect
+            createTone(80, 0.2, 'sawtooth');
+            setTimeout(() => createTone(60, 0.1, 'square'), 50);
+          }
+        };
+      } catch (e) {
+        // Fallback if Web Audio API isn't supported
+        return {
+          playBoo: () => console.log('Boo sound would play'),
+          playSplat: () => console.log('Splat sound would play')
+        };
+      }
+    }
+
+    const audioSystem = createAudioContext();
+
+    // Confetti Animation for Correct Answers
+    let confettiTimeout = null;
+
+    function triggerConfetti() {
+      // Stop any previous confetti
+      if (typeof confetti.reset === "function") confetti.reset();
+
+      // Fire a quick, impressive burst
+      confetti({
+        particleCount: 180,
+        spread: 120,
+        startVelocity: 60,
+        origin: { y: 0.6 },
+        colors: ['#00d4aa', '#667eea', '#764ba2', '#4ecdc4', '#45b7d1'],
+        scalar: 1.2,
+        ticks: 60 // makes it faster
+      });
+
+      // Optionally, a second quick burst for extra effect
+      confettiTimeout = setTimeout(() => {
+        confetti({
+          particleCount: 120,
+          spread: 160,
+          startVelocity: 70,
+          origin: { y: 0.7 },
+          colors: ['#00d4aa', '#667eea', '#764ba2', '#4ecdc4', '#45b7d1'],
+          shapes: ['star', 'circle'],
+          scalar: 1.3,
+          ticks: 50
+        });
+      }, 200);
+
+      // Stop any lingering confetti after 800ms
+      setTimeout(() => {
+        if (typeof confetti.reset === "function") confetti.reset();
+      }, 800);
+    }
+
+    // Tomato Throwing Animation for Incorrect Answers
+    function throwTomatoes() {
+      const numberOfTomatoes = 4;
+
+      for (let i = 0; i < numberOfTomatoes; i++) {
+        setTimeout(() => {
+          createTomato(i % 2 === 0);
+        }, i * 200);
+      }
+    }
+
+    function createTomato(fromLeft = true) {
+      const tomato = document.createElement('div');
+      tomato.className = 'tomato';
+
+      const startX = fromLeft ? -50 : window.innerWidth + 50;
+      const startY = Math.random() * (window.innerHeight * 0.3) + window.innerHeight * 0.2;
+
+      tomato.style.left = startX + 'px';
+      tomato.style.top = startY + 'px';
+
+      elements.tomatoContainer.appendChild(tomato);
+
+      // Animate the tomato
+      const animationName = fromLeft ? 'throwTomatoLeft' : 'throwTomatoRight';
+      tomato.style.animation = `${animationName} 1.2s ease-out forwards`;
+
+      // Create splat effect
+      setTimeout(() => {
+        createSplat(window.innerWidth / 2 + (Math.random() - 0.5) * 200,
+          window.innerHeight / 2 + (Math.random() - 0.5) * 100);
+        tomato.remove();
+      }, 1200);
+    }
+
+    function createSplat(x, y) {
+      const splat = document.createElement('div');
+      splat.className = 'splat';
+      splat.style.left = x + 'px';
+      splat.style.top = y + 'px';
+
+      elements.tomatoContainer.appendChild(splat);
+
+      // Play splat sound
+      audioSystem.playSplat();
+
+      setTimeout(() => {
+        splat.remove();
+      }, 1000);
+    }
+
+    // Enhanced Question Transition
+    function transitionToNextQuestion() {
+      // Stop confetti if running
+      if (typeof confetti.reset === "function") confetti.reset();
+      if (confettiTimeout) clearTimeout(confettiTimeout);
+
+      elements.questionBox.classList.add('fade-out');
+      elements.quizContainer.classList.add('transitioning');
+
+      setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < quizData.length) {
+          loadQuestion();
+          elements.questionBox.classList.remove('fade-out');
+          elements.questionBox.classList.add('fade-in');
+          elements.quizContainer.classList.remove('transitioning');
+
+          setTimeout(() => {
+            elements.questionBox.classList.remove('fade-in');
+          }, 300);
+        } else {
+          showResult();
+        }
+      }, 300);
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function initializeQuiz() {
+      shuffleArray(quizData);
+      elements.totalQuestions.textContent = quizData.length;
+      loadQuestion();
+      elements.quizContainer.style.display = "block";
+    }
+
+    function loadQuestion() {
+      const q = quizData[currentQuestion];
+
+      elements.feedbackEl.style.display = "none";
+      elements.feedbackEl.className = "";
+
+      elements.questionEl.innerHTML = `What is the <strong>${q.type}</strong> of <strong>"${q.word}"</strong>?`;
+
+      elements.optionsEl.innerHTML = "";
+      q.options.forEach((option, index) => {
+        const isSelected = userAnswers[currentQuestion] === option;
+        elements.optionsEl.innerHTML += `
+          <div class="option-card ${isSelected ? 'selected' : ''}" onclick="selectOption('${option}', this)">
+            <input type="radio" name="option" value="${option}" class="option-input" ${isSelected ? 'checked' : ''}>
+            <span class="option-text">${option}</span>
+          </div>
+        `;
+      });
+
+      updateProgress();
+      updateNavigation();
+      updateQuestionCounter();
+
+      if (userAnswers[currentQuestion]) {
+        showFeedback();
+      }
+    }
+
+    function selectOption(value, element) {
+      if (userAnswers[currentQuestion]) return;
+
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+
+      element.classList.add('selected');
+
+      const radio = element.querySelector('input[type="radio"]');
+      radio.checked = true;
+    }
+
+    function updateProgress() {
+      const progressPercentage = ((currentQuestion + 1) / quizData.length) * 100;
+      elements.progressBar.style.width = `${progressPercentage}%`;
+    }
+
+    function updateNavigation() {
+      elements.prevBtn.disabled = currentQuestion === 0;
+
+      if (userAnswers[currentQuestion]) {
+        elements.submitBtn.style.display = "none";
+        elements.nextBtn.style.display = "inline-block";
+      } else {
+        elements.submitBtn.style.display = "inline-block";
+        elements.nextBtn.style.display = "none";
+      }
+    }
+
+    function updateQuestionCounter() {
+      elements.questionCounter.textContent = `${currentQuestion + 1} / ${quizData.length}`;
+    }
+
+    function animateScoreUpdate(newScore) {
+      const scoreDisplay = document.querySelector('.score-display');
+      const scoreValue = elements.scoreValue;
+
+      scoreDisplay.classList.add('animate');
+      scoreValue.classList.add('bounce');
+
+      setTimeout(() => {
+        scoreValue.textContent = newScore;
+      }, 200);
+
+      setTimeout(() => {
+        scoreDisplay.classList.remove('animate');
+        scoreValue.classList.remove('bounce');
+      }, 800);
+    }
+
+    function submitAnswer() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (!selected) {
+        elements.submitBtn.style.animation = 'incorrectShake 0.5s ease';
+        setTimeout(() => {
+          elements.submitBtn.style.animation = '';
+        }, 500);
+        return;
+      }
+
+      const userAnswer = selected.value;
+      const correctAnswer = quizData[currentQuestion].answer;
+      userAnswers[currentQuestion] = userAnswer;
+
+      if (userAnswer === correctAnswer) {
+        score++;
+        animateScoreUpdate(score);
+
+        // Trigger confetti celebration
+        setTimeout(() => {
+          triggerConfetti();
+        }, 600);
+      } else {
+        // Trigger tomato throwing and boo sounds
+        setTimeout(() => {
+          throwTomatoes();
+          audioSystem.playBoo();
+        }, 300);
+      }
+
+      showFeedback();
+      updateNavigation();
+
+      setTimeout(() => {
+        document.querySelectorAll('.option-card').forEach(card => {
+          const option = card.querySelector('.option-text').textContent;
+          if (option === correctAnswer) {
+            card.classList.add('correct');
+          } else if (option === userAnswer && userAnswer !== correctAnswer) {
+            card.classList.add('incorrect');
+          }
+        });
+      }, 300);
+    }
+
+    function showFeedback() {
+      const userAnswer = userAnswers[currentQuestion];
+      const { word, answer: correctAnswer, type } = quizData[currentQuestion];
+
+      if (userAnswer === correctAnswer) {
+        elements.feedbackEl.innerHTML = `
+          <strong>🎉 Excellent!</strong> "<strong>${correctAnswer}</strong>" is the correct ${type}.
+        `;
+        elements.feedbackEl.className = "feedback-correct";
+      } else {
+        elements.feedbackEl.innerHTML = `
+          <strong>💭 Not quite!</strong> The correct ${type} of "<strong>${word}</strong>" is "<strong>${correctAnswer}</strong>".
+        `;
+        elements.feedbackEl.className = "feedback-incorrect";
+      }
+
+      elements.feedbackEl.style.display = "block";
+    }
+
+    function nextQuestion() {
+      transitionToNextQuestion();
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        // Stop confetti if running
+        if (typeof confetti.reset === "function") confetti.reset();
+        if (confettiTimeout) clearTimeout(confettiTimeout);
+
+        elements.questionBox.classList.add('fade-out');
+        elements.quizContainer.classList.add('transitioning');
+
+        setTimeout(() => {
+          currentQuestion--;
+          loadQuestion();
+          elements.questionBox.classList.remove('fade-out');
+          elements.questionBox.classList.add('fade-in');
+          elements.quizContainer.classList.remove('transitioning');
+
+          setTimeout(() => {
+            elements.questionBox.classList.remove('fade-in');
+          }, 300);
+        }, 300);
+      }
+    }
+
+    function getPerformanceData(score, total) {
+      const percentage = (score / total) * 100;
+
+      if (percentage >= 90) {
+        return {
+          badge: 'badge-excellent',
+          title: '🏆 Outstanding!',
+          message: 'You have an exceptional grasp of vocabulary!'
+        };
+      } else if (percentage >= 70) {
+        return {
+          badge: 'badge-good',
+          title: '🌟 Well Done!',
+          message: 'Great job! You have a solid understanding of these words.'
+        };
+      } else {
+        return {
+          badge: 'badge-needs-improvement',
+          title: '📚 Keep Learning!',
+          message: 'Practice makes perfect. Keep expanding your vocabulary!'
+        };
+      }
+    }
+
+    function showResult() {
+      elements.quizContainer.style.display = "none";
+      elements.resultContainer.style.display = "block";
+
+      const performance = getPerformanceData(score, quizData.length);
+      const percentage = Math.round((score / quizData.length) * 100);
+
+      elements.resultContainer.innerHTML = `
+        <h2 class="result-title">Quiz Complete!</h2>
+        <div class="final-score">${score}/${quizData.length}</div>
+        <div class="performance-badge ${performance.badge}">
+          ${performance.title}
+        </div>
+        <p class="result-message">
+          ${performance.message}<br>
+          You scored <strong>${percentage}%</strong> on this vocabulary challenge.
+        </p>
+        <button class="btn" onclick="location.reload()" style="margin-top: 2rem; font-size: 1.1rem; padding: 1.2rem 2.5rem;">
+          🔄 Take Quiz Again
+        </button>
+      `;
+
+      // Final confetti if high score
+      if (percentage >= 90) {
+        setTimeout(() => {
+          confetti({
+            particleCount: 200,
+            spread: 160,
+            origin: { y: 0.5 },
+            colors: ['#00d4aa', '#667eea', '#764ba2', '#4ecdc4', '#45b7d1']
+          });
+        }, 500);
+      }
+    }
+
+    // Initialize audio context on first user interaction
+    document.addEventListener('click', function initAudio() {
+      if (audioSystem.context && audioSystem.context.state === 'suspended') {
+        audioSystem.context.resume();
+      }
+      document.removeEventListener('click', initAudio);
+    }, { once: true });
+
+    document.addEventListener('DOMContentLoaded', initializeQuiz);
+  </script>
+</body>
+
+</html>
